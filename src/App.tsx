@@ -3,36 +3,25 @@
 //import Input from './components/ui/Input'
 //import Card from './components/ui/Card'
 
-import Badge, { type OrderStatus } from "./components/ui/Badge"
-import Table from "./components/ui/Table"
-
-interface Order {
-  id: string
-  customer: string
-  item: string
-  status: OrderStatus
-  dueDate: string
-}
-
-const orders: Order[] = [
-  { id: '1042', customer: 'Chidi Nwosu', item: 'Agbada set', status: 'Sewing', dueDate: 'today' },
-  { id: '1041', customer: 'Funke Alade', item: 'Ankara gown', status: 'Ready', dueDate: 'tomorrow' },
-]
+//import Badge, { type OrderStatus } from "./components/ui/Badge"
+//import Table from "./components/ui/Table"
+import { useState } from 'react'
+import Sidebar from './components/layout/Sidebar'
+import TopNav from './components/layout/TopNav'
 function App() {
   
 
+  const [activePath, setActivePath] = useState('/')
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+
   return (
-    <Table<Order>
-  data={orders}
-  keyExtractor={(order) => order.id}
-  columns={[
-    { header: 'Order', render: (order) => order.id },
-    { header: 'Customer', render: (order) => order.customer },
-    { header: 'Item', render: (order) => order.item },
-    { header: 'Status', render: (order) => <Badge status={order.status} /> },
-    { header: 'Due Date', render: (order) => order.dueDate },
-  ]}
-  />
+    <div className="flex">
+  <Sidebar activePath={activePath} onNavigate={setActivePath} isCollapsed={isSidebarCollapsed} />
+  <div className="flex-1 flex flex-col">
+    <TopNav userName="Amaka Okoro" onToggleSidebar={() => setIsSidebarCollapsed((prev) => !prev)} />
+    <main className="flex-1 p-8">{activePath}</main>
+  </div>
+</div>
   )
 }
 
