@@ -6,6 +6,8 @@ import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import { mockOrders, type Order, type OrderStatusFilter } from '../data/mockOrders'
 import { Plus, Search } from 'lucide-react'
+import Modal from '../components/ui/Modal'
+import { type OrderStatus } from '../components/ui/Badge' 
 
 const statusOptions: OrderStatusFilter[] = [
   'All',
@@ -22,6 +24,15 @@ const statusOptions: OrderStatusFilter[] = [
 export default function Orders() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<OrderStatusFilter>('All')
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  
+  const [newOrder, setNewOrder] = useState({
+    customer: '',
+    item: '',
+    status: 'Received' as OrderStatus,
+    dueDate: '',
+    amount: '',
+  })
 
   const filteredOrders = mockOrders.filter((order) => {
     const matchesSearch =
@@ -33,6 +44,20 @@ export default function Orders() {
     return matchesSearch && matchesStatus
   })
 
+  function updateField(field: keyof typeof newOrder, value: string) {
+    setNewOrder((prev) => ({ ...prev, [field]: value }))
+  }
+  function closeModal() {
+    setIsModalOpen(false)
+    setNewOrder({ customer: '', item: '', status: 'Received', dueDate: '', amount: '' })
+  }
+  
+  function handleCreateOrder() {
+    console.log('New order submitted:', newOrder)
+    closeModal()
+  }
+  
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -40,9 +65,9 @@ export default function Orders() {
           <h1 className="text-lg font-semibold">Orders</h1>
           <p className="text-sm text-text-secondary mt-0.5">Track every order from received to delivered.</p>
         </div>
-        <Button icon={<Plus size={18} />} onClick={() => console.log('open modal')}>
-          New Order
-        </Button>
+        <Button icon={<Plus size={18} />} onClick={() => setIsModalOpen(true)}>
+  New Order
+</Button>
       </div>
 
       <Card>
@@ -94,6 +119,56 @@ export default function Orders() {
           ]}
         />
       </Card>
+      <Modal isOpen={isModalOpen} onClose={closeModal} title="New Order">
+  <div className="flex flex-col gap-4">
+    <Input
+      label="Customer name"
+      placeholder="e.g. Chidi Nwosu"
+      value={newOrder.customer}
+      onChange={(e) => updateField('customer', e.target.value)}
+    />
+
+    <Input
+      label="Item"
+      placeholder="e.g. Agbada set"
+      value={newOrder.item}
+      onChange={(e) => updateField('item', e.target.value)}
+    />
+
+    <div>
+      <label className="text-sm font-medium text-text-primary block mb-1.5">Status</label>
+      <select
+        value={newOrder.status}
+        onChange={(e) => updateField('status', e.target.value)}
+        className="h-11 w-full rounded-[10px] border border-[#E5E7EB] px-3.5 text-sm text-text-primary bg-white focus:outline-none focus:border-primary"
+      >
+        {statusOptions.filter((s) => s !== 'All').map((status) => (
+          <option key={status} value={status}>{status}</option>
+        ))}
+      </select>
+    </div>
+
+    <Input
+      label="Due date"
+      type="date"
+      value={newOrder.dueDate}
+      onChange={(e) => updateField('dueDate', e.target.value)}
+    />
+
+    <Input
+      label="Amount (₦)"
+      type="number"
+      placeholder="0"
+      value={newOrder.amount}
+      onChange={(e) => updateField('amount', e.target.value)}
+    />
+
+    <div className="flex justify-end gap-3 mt-2">
+      <Button variant="secondary" onClick={closeModal}>Cancel</Button>
+      <Button onClick={handleCreateOrder}>Create Order</Button>
+    </div>
+  </div>
+</Modal>
     </div>
   )
 }
