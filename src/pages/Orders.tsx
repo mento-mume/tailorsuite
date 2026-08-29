@@ -4,7 +4,7 @@ import Input from '../components/ui/Input'
 import Table from '../components/ui/Table'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
-import { mockOrders, type Order, type OrderStatusFilter } from '../data/mockOrders'
+import { type Order, type OrderStatusFilter } from '../data/mockOrders'
 import { Plus, Search } from 'lucide-react'
 import Modal from '../components/ui/Modal'
 import { type OrderStatus } from '../components/ui/Badge' 
@@ -20,8 +20,11 @@ const statusOptions: OrderStatusFilter[] = [
   'Delivered',
   'Cancelled',
 ]
-
-export default function Orders() {
+interface OrdersProps {
+  orders: Order[]
+  onAddOrder: (order: Order) => void
+}
+export default function Orders({orders, onAddOrder}: OrdersProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<OrderStatusFilter>('All')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -34,7 +37,7 @@ export default function Orders() {
     amount: '',
   })
 
-  const filteredOrders = mockOrders.filter((order) => {
+  const filteredOrders = orders.filter((order) => {
     const matchesSearch =
       order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.id.includes(searchTerm)
@@ -53,7 +56,17 @@ export default function Orders() {
   }
   
   function handleCreateOrder() {
-    console.log('New order submitted:', newOrder)
+    const order: Order = {
+      id: Date.now().toString(),
+      customer: newOrder.customer,
+      item: newOrder.item,
+      status: newOrder.status,
+      dueDate: newOrder.dueDate,
+      amount: Number(newOrder.amount) || 0,
+      isPaid: false,
+    }
+
+    onAddOrder(order)
     closeModal()
   }
   

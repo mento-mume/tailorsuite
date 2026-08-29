@@ -2,22 +2,25 @@ import Card from '../components/ui/Card'
 import Table from '../components/ui/Table'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
-import { mockOrders, type Order } from '../data/mockOrders'
+import {  type Order } from '../data/mockOrders'
 import { mockActivity } from '../data/mockActivity'
 
 import { ClipboardList, CheckCircle2, Wallet, AlertCircle, Plus } from 'lucide-react'
 
-export default function Dashboard() {
-  const todaysOrders = mockOrders.slice(0, 4)
+interface DashboardProps {
+  orders: Order[]
+}
+export default function Dashboard({ orders }: DashboardProps) {
+  const todaysOrders = orders.slice(0, 4)
 
-  const upcomingDeliveries = mockOrders
+  const upcomingDeliveries = orders
     .filter((order) => order.status !== 'Delivered' && order.status !== 'Cancelled')
     .slice(0, 3)
 
-  const outstandingPayments = mockOrders.filter((order) => !order.isPaid && order.amount > 0)
+  const outstandingPayments = orders.filter((order) => !order.isPaid && order.amount > 0)
 
-  const activeOrdersCount = mockOrders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled').length
-  const readyCount = mockOrders.filter((o) => o.status === 'Ready').length
+  const activeOrdersCount = orders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled').length
+  const readyCount = orders.filter((o) => o.status === 'Ready').length
   const totalOwed = outstandingPayments.reduce((sum, order) => sum + order.amount, 0)
 
   return (
