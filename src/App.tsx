@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState,useEffect } from 'react'
 import Sidebar from './components/layout/Sidebar'
 import TopNav from './components/layout/TopNav'
 import Dashboard from './pages/Dashboard'
@@ -9,17 +9,38 @@ import { mockOrders, type Order } from './data/mockOrders'
 import { mockCustomers, type Customer } from './data/mockCustomers'
 import Expenses from './pages/Expenses'
 import { mockExpenses, type Expense } from './data/mockExpenses'
+import { onAuthStateChanged,  type User } from 'firebase/auth'
+import { auth } from './lib/firebase'
+import Login from './pages/Login'
 
 function App() {
-  
-
+  const [user, setUser] = useState<User | null>(null)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [activePath, setActivePath] = useState('/')
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [orders, setOrders] = useState<Order[]>(mockOrders)
   const [customers, setCustomers] = useState<Customer[]>(mockCustomers)
-const [expenses, setExpenses] = useState<Expense[]>(mockExpenses)
+  const [expenses, setExpenses] = useState<Expense[]>(mockExpenses)
 
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser)
+      setIsCheckingAuth(false)
+    })
+
+    return () => unsubscribe()
+  }, [])
+
+  if (isCheckingAuth) {
+    return <div className="min-h-screen flex items-center justify-center">Loading…</div>
+  }
+
+  if (!user) {
+    return <Login />
+  }
+
+ 
   function addOrder(newOrder: Order) {
     setOrders((prev) => [...prev, newOrder])
   }

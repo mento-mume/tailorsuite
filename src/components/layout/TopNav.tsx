@@ -1,5 +1,7 @@
 import Input from '../ui/Input'
 import { Bell, Search, PanelLeft } from 'lucide-react'
+import { signOut } from 'firebase/auth'
+import { auth } from '../../lib/firebase'
 
 
 interface TopNavProps {
@@ -34,6 +36,9 @@ export default function TopNav({ userName, onSearch, onToggleSidebar }: TopNavPr
             {initials}
           </div>
           <span className="text-sm font-semibold">{userName}</span>
+          <button onClick={() => signOut(auth)} className="text-xs text-text-secondary hover:text-danger">
+  Sign out
+</button>
         </div>
       </div>
     </header>
