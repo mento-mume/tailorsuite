@@ -2,7 +2,7 @@ import Card from '../components/ui/Card'
 import Table from '../components/ui/Table'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
-import {  type Order } from '../data/mockOrders'
+import {  type Order } from '../data/orderTypes'
 import { mockActivity } from '../data/mockActivity'
 
 import { ClipboardList, CheckCircle2, Wallet, AlertCircle, Plus } from 'lucide-react'

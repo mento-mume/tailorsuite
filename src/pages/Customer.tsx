@@ -4,12 +4,12 @@ import Input from '../components/ui/Input'
 import Modal from '../components/ui/Modal'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
-import { type Customer } from '../data/mockCustomers'
+import { type Customer } from '../data/customerTypes'
 const avatarColors = ['bg-primary', 'bg-secondary', 'bg-violet-600', 'bg-orange-500', 'bg-success', 'bg-emerald-500']
 
 interface CustomersProps {
   customers: Customer[]
-  onAddCustomer: (customer: Customer) => void
+  onAddCustomer: (customer: Omit<Customer, 'id'>) => void
 }
 
 
@@ -33,16 +33,15 @@ interface CustomersProps {
       setNewCustomer({ name: '', phone: '' })
     }
     
-    function handleCreateCustomer() {
-      const customer: Customer = {
-        id: Date.now().toString(),
+    async function handleCreateCustomer() {
+      const customer: Omit<Customer, 'id'> = {
         name: newCustomer.name,
         phone: newCustomer.phone,
         ordersCount: 0,
         amountOwed: 0,
       }
     
-      onAddCustomer(customer)
+      await onAddCustomer(customer)
       closeModal()
     }
     

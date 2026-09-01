@@ -4,7 +4,7 @@ import Input from '../components/ui/Input'
 import Table from '../components/ui/Table'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
-import { type Order, type OrderStatusFilter } from '../data/mockOrders'
+import { type Order, type OrderStatusFilter } from '../data/orderTypes'
 import { Plus, Search } from 'lucide-react'
 import Modal from '../components/ui/Modal'
 import { type OrderStatus } from '../components/ui/Badge' 
@@ -22,7 +22,7 @@ const statusOptions: OrderStatusFilter[] = [
 ]
 interface OrdersProps {
   orders: Order[]
-  onAddOrder: (order: Order) => void
+  onAddOrder: (order: Omit<Order, 'id'>) => Promise<void>
 }
 export default function Orders({orders, onAddOrder}: OrdersProps) {
   const [searchTerm, setSearchTerm] = useState('')
@@ -55,9 +55,8 @@ export default function Orders({orders, onAddOrder}: OrdersProps) {
     setNewOrder({ customer: '', item: '', status: 'Received', dueDate: '', amount: '' })
   }
   
-  function handleCreateOrder() {
-    const order: Order = {
-      id: Date.now().toString(),
+  async function handleCreateOrder() {
+    const order: Omit<Order, 'id'> = {
       customer: newOrder.customer,
       item: newOrder.item,
       status: newOrder.status,
@@ -65,8 +64,8 @@ export default function Orders({orders, onAddOrder}: OrdersProps) {
       amount: Number(newOrder.amount) || 0,
       isPaid: false,
     }
-
-    onAddOrder(order)
+  
+    await onAddOrder(order)
     closeModal()
   }
   

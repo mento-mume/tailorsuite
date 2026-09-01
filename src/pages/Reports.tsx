@@ -1,5 +1,5 @@
 import Card from "../components/ui/Card"
-import { type Order } from "../data/mockOrders"
+import { type Order } from "../data/orderTypes"
 import { Wallet, ShoppingBag, TrendingUp, CheckCircle2 } from 'lucide-react'
 interface ReportsProps {
     orders: Order[]

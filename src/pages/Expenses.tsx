@@ -4,7 +4,7 @@ import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Modal from '../components/ui/Modal'
-import { type Expense, type ExpenseCategory, } from '../data/mockExpenses'
+import { type Expense, type ExpenseCategory, } from '../data/expensesTypes'
 import { Shirt, Users, Zap, Wrench } from 'lucide-react'
 
 
@@ -18,7 +18,7 @@ const categoryStyles: Record<ExpenseCategory, { bg: string; text: string; icon: 
 
 interface ExpensesProps {
     expenses: Expense[]
-    onAddExpense: (expense: Expense) => void
+    onAddExpense: (expense: Omit<Expense, 'id'>) => void
   }
   
   export default function Expenses({ expenses, onAddExpense }: ExpensesProps) {
@@ -39,16 +39,15 @@ interface ExpensesProps {
       setNewExpense({ name: '', category: 'Materials', date: '', amount: '' })
     }
   
-    function handleCreateExpense() {
-      const expense: Expense = {
-        id: Date.now().toString(),
+    async function handleCreateExpense() {
+      const expense: Omit<Expense, 'id'> = {
         name: newExpense.name,
         category: newExpense.category,
         date: newExpense.date,
         amount: Number(newExpense.amount) || 0,
       }
   
-      onAddExpense(expense)
+      await onAddExpense(expense)
       closeModal()
     }
   
