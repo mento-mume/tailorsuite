@@ -14,15 +14,17 @@ import { type Order } from './data/orderTypes'
 import { useFirestoreCollection } from './hooks/useFirestoreCollection'
 import { type Customer } from './data/customerTypes'
 import { type Expense } from './data/expensesTypes'
+import { Routes, Route, Navigate } from 'react-router-dom'
+
 function App() {
   const [user, setUser] = useState<User | null>(null)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [activePath, setActivePath] = useState('/')
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const orders = useFirestoreCollection<Order>('orders')
-  const customers = useFirestoreCollection<Customer>('customers')
-  const expenses = useFirestoreCollection<Expense>('expenses')
-  
+  const { data: orders, isLoading: ordersLoading } = useFirestoreCollection<Order>('orders')
+  const { data: customers, isLoading: customersLoading } = useFirestoreCollection<Customer>('customers')
+  const { data: expenses, isLoading: expensesLoading } = useFirestoreCollection<Expense>('expenses')
+ 
   async function addOrder(newOrder: Omit<Order, 'id'>) {
     await addDoc(collection(db, 'orders'), newOrder)
   }
@@ -53,26 +55,23 @@ function App() {
     return <Login />
   }
 
-  
-  function renderPage() {
-    if (activePath === '/orders') return <Orders orders={orders} onAddOrder={addOrder}/>
-    if (activePath === '/customers') return <Customers customers={customers} onAddCustomer={addCustomer} />
-    if (activePath === '/expenses') return <Expenses expenses={expenses} onAddExpense={addExpense} />
-    if (activePath === '/reports') return <Reports orders={orders} />
-
-    return <Dashboard orders={orders} />
-  }
+ 
+ 
   return (
     <div className="flex">
   <Sidebar activePath={activePath} onNavigate={setActivePath} isCollapsed={isSidebarCollapsed} />
   <div className="flex-1 flex flex-col">
     <TopNav userName="Amaka Okoro" onToggleSidebar={() => setIsSidebarCollapsed((prev) => !prev)} />
     
-    <main className="flex-1 p-8">  {renderPage()}</main>
-  
-
-
-  </div>
+    <main className="flex-1 p-8">  <Routes>
+    <Route path="/" element={<Dashboard orders={orders} isLoading={ordersLoading} />} />
+    <Route path="/orders" element={<Orders orders={orders} isLoading={ordersLoading} onAddOrder={addOrder} />} />
+    <Route path="/customers" element={<Customers customers={customers} isLoading={customersLoading} onAddCustomer={addCustomer} />} />
+    <Route path="/expenses" element={<Expenses expenses={expenses} isLoading={expensesLoading} onAddExpense={addExpense} />} />
+    <Route path="/reports" element={<Reports orders={orders} isLoading={ordersLoading} />} />
+    <Route path="*" element={<Navigate to="/" replace />} />
+  </Routes></main>
+    </div>
 </div>
   )
 }

@@ -9,13 +9,15 @@ const avatarColors = ['bg-primary', 'bg-secondary', 'bg-violet-600', 'bg-orange-
 
 interface CustomersProps {
   customers: Customer[]
-  onAddCustomer: (customer: Omit<Customer, 'id'>) => void
+  isLoading: boolean
+  onAddCustomer: (customer: Omit<Customer, 'id'>) => Promise<void>
 }
 
 
-  export default function Customers({ customers, onAddCustomer }: CustomersProps) {
+  export default function Customers({ customers, isLoading, onAddCustomer }: CustomersProps) {
 
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [submitError, setSubmitError] = useState('')
     const [newCustomer, setNewCustomer] = useState({ name: '', phone: '' })
     function getAvatarColor(index: number) {
       return avatarColors[index % avatarColors.length]
@@ -30,10 +32,12 @@ interface CustomersProps {
     
     function closeModal() {
       setIsModalOpen(false)
+      setSubmitError('')
       setNewCustomer({ name: '', phone: '' })
     }
     
     async function handleCreateCustomer() {
+      setSubmitError('')
       const customer: Omit<Customer, 'id'> = {
         name: newCustomer.name,
         phone: newCustomer.phone,
@@ -41,8 +45,12 @@ interface CustomersProps {
         amountOwed: 0,
       }
     
-      await onAddCustomer(customer)
-      closeModal()
+      try {
+        await onAddCustomer(customer)
+        closeModal()
+      } catch {
+        setSubmitError('Could not create customer. Check your connection and try again.')
+      }
     }
     
     return (
@@ -56,6 +64,9 @@ interface CustomersProps {
     New Customer
   </Button>
         </div>
+        {isLoading ? (
+          <div className="py-12 text-center text-sm text-text-secondary">Loading customers…</div>
+        ) : (
         <div className="grid grid-cols-3 gap-6">
         {customers.map((customer, index) => (
           <Card key={customer.id}>
@@ -86,7 +97,9 @@ interface CustomersProps {
           </Card>
 
         ))}
-        <Modal isOpen={isModalOpen} onClose={closeModal} title="New Customer">
+        
+      </div>)}
+      <Modal isOpen={isModalOpen} onClose={closeModal} title="New Customer">
   <div className="flex flex-col gap-4">
     <Input
       label="Full name"
@@ -100,13 +113,14 @@ interface CustomersProps {
       value={newCustomer.phone}
       onChange={(e) => updateField('phone', e.target.value)}
     />
+    {submitError && <p className="text-xs text-danger">{submitError}</p>}
+    
     <div className="flex justify-end gap-3 mt-2">
       <Button variant="secondary" onClick={closeModal}>Cancel</Button>
       <Button onClick={handleCreateCustomer}>Create Customer</Button>
     </div>
   </div>
 </Modal>
-      </div>
     </div>
   )
 }

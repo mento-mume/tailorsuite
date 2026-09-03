@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 import { LayoutDashboard, Users, ShoppingBag, CreditCard,  LineChart } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
+
 interface NavItem {
   label: string
   path: string
@@ -34,7 +36,9 @@ const navSections: NavSection[] = [
     isCollapsed: boolean
   }
   
-  export default function Sidebar({ activePath, onNavigate, isCollapsed }: SidebarProps) {
+  export default function Sidebar({ isCollapsed }: SidebarProps) {
+    const location = useLocation()
+
     return (
       <aside
   className={`h-screen bg-white border-r border-[#E5E7EB] flex flex-col transition-[width] duration-200 ${isCollapsed ? 'w-20' : 'w-[260px]'}`}
@@ -46,7 +50,7 @@ const navSections: NavSection[] = [
           {!isCollapsed && <span className="font-bold text-base whitespace-nowrap">TailorSuite</span>}
           
         </div>
-  
+{/*   
         <nav className="p-3 flex flex-col gap-1">
   {navSections.map((section) => (
     <div key={section.label} className="mb-2 last:mb-0">
@@ -76,7 +80,31 @@ const navSections: NavSection[] = [
       </div>
     </div>
   ))}
-</nav>
+</nav> */}
+<nav className="p-3 flex flex-col gap-1">
+        {navSections.map((section) => (
+          <div key={section.label} className="mb-2 last:mb-0">
+            {!isCollapsed && <div className="...">{section.label}</div>}
+            <div className="flex flex-col gap-0.5">
+              {section.items.map((item) => {
+                const isActive = location.pathname === item.path
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center gap-3 h-11 px-3 rounded-[10px] text-sm font-medium transition-colors ${
+                      isActive ? 'bg-primary text-white' : 'text-text-secondary hover:bg-gray-100 hover:text-text-primary'
+                    }`}
+                  >
+                    <span className="w-[22px] h-[22px] shrink-0">{item.icon}</span>
+                    {!isCollapsed && item.label}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+      </nav>
       </aside>
     )
   }

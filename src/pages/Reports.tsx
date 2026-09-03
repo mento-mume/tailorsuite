@@ -3,9 +3,10 @@ import { type Order } from "../data/orderTypes"
 import { Wallet, ShoppingBag, TrendingUp, CheckCircle2 } from 'lucide-react'
 interface ReportsProps {
     orders: Order[]
+    isLoading: boolean
   }
   
-  export default function Reports({ orders }: ReportsProps) {
+  export default function Reports({ orders, isLoading }: ReportsProps) {
     const paidOrders = orders.filter((order) => order.isPaid)
     const totalRevenue = paidOrders.reduce((sum, order) => sum + order.amount, 0)
     const totalOrdersCount = orders.length
@@ -23,7 +24,10 @@ interface ReportsProps {
     <option>This year</option>
   </select>
 </div>
-    
+    {isLoading ? (
+        <div className="py-12 text-center text-sm text-text-secondary">Loading reports…</div>
+      ) : (
+        <>
           <div className="grid grid-cols-4 gap-6 mb-6">
           <Card>
   <div className="flex items-center justify-between mb-2">
@@ -41,8 +45,9 @@ interface ReportsProps {
       <ShoppingBag size={18} />
     </div>
   </div>
-  <p className="text-2xl font-bold">₦{totalOrdersCount.toLocaleString()}</p>
+  <p className="text-2xl font-bold">{totalOrdersCount}</p>
 </Card>
+
 <Card>
   <div className="flex items-center justify-between mb-2">
     <p className="text-sm text-text-secondary font-medium">Average Order Value</p>
@@ -50,18 +55,18 @@ interface ReportsProps {
       <TrendingUp size={18} />
     </div>
   </div>
-  <p className="text-2xl font-bold">₦{totalRevenue.toLocaleString()}</p>
+  <p className="text-2xl font-bold">₦{Math.round(averageOrderValue).toLocaleString()}</p>
 </Card>
+
 <Card>
   <div className="flex items-center justify-between mb-2">
-    <p className="text-sm text-text-secondary font-medium">Repeat Customers</p>
+    <p className="text-sm text-text-secondary font-medium">Paid Orders</p>
     <div className="w-9 h-9 rounded-lg bg-blue-50 text-primary flex items-center justify-center shrink-0">
       <CheckCircle2 size={18} />
     </div>
   </div>
-  <p className="text-2xl font-bold">₦{averageOrderValue.toLocaleString()}</p>
-</Card>
-          </div>
+  <p className="text-2xl font-bold">{paidOrders.length}</p>
+</Card>          </div>
           <Card title="Monthly Revenue">
         {/* TODO: static placeholder — real monthly grouping needs orders to carry
             actual Date objects instead of display strings like "Aug 6" for dueDate.
@@ -82,6 +87,8 @@ interface ReportsProps {
           ))}
         </div>
       </Card>
+      </> 
+      )}
     </div>
   )
 }

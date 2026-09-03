@@ -9,8 +9,9 @@ import { ClipboardList, CheckCircle2, Wallet, AlertCircle, Plus } from 'lucide-r
 
 interface DashboardProps {
   orders: Order[]
+  isLoading: boolean
 }
-export default function Dashboard({ orders }: DashboardProps) {
+export default function Dashboard({ orders, isLoading }: DashboardProps) {
   const todaysOrders = orders.slice(0, 4)
 
   const upcomingDeliveries = orders
@@ -33,8 +34,12 @@ export default function Dashboard({ orders }: DashboardProps) {
         <Button icon={<Plus size={18} />}>New Order</Button>
       </div>
 
-     
 
+      {isLoading ? (
+        <div className="py-12 text-center text-sm text-text-secondary">Loading dashboard…</div>
+      ) : (
+  
+<>
 <div className="grid grid-cols-4 gap-6 mb-6">
   <Card>
     <div className="flex items-center justify-between mb-2">
@@ -124,6 +129,8 @@ export default function Dashboard({ orders }: DashboardProps) {
           ))}
         </Card>
       </div>
+      </>
+      )}
     </>
   )
 }

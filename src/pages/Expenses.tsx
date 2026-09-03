@@ -18,11 +18,13 @@ const categoryStyles: Record<ExpenseCategory, { bg: string; text: string; icon: 
 
 interface ExpensesProps {
     expenses: Expense[]
-    onAddExpense: (expense: Omit<Expense, 'id'>) => void
+    isLoading: boolean
+    onAddExpense: (expense: Omit<Expense, 'id'>) => Promise<void>
   }
   
-  export default function Expenses({ expenses, onAddExpense }: ExpensesProps) {
+  export default function Expenses({ expenses, isLoading, onAddExpense }: ExpensesProps) {
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [submitError, setSubmitError] = useState('')
     const [newExpense, setNewExpense] = useState({
       name: '',
       category: 'Materials' as ExpenseCategory,
@@ -36,21 +38,26 @@ interface ExpensesProps {
   
     function closeModal() {
       setIsModalOpen(false)
+      setSubmitError('')
       setNewExpense({ name: '', category: 'Materials', date: '', amount: '' })
     }
   
     async function handleCreateExpense() {
+      setSubmitError('')
       const expense: Omit<Expense, 'id'> = {
         name: newExpense.name,
         category: newExpense.category,
         date: newExpense.date,
         amount: Number(newExpense.amount) || 0,
       }
-  
-      await onAddExpense(expense)
-      closeModal()
+    
+      try {
+        await onAddExpense(expense)
+        closeModal()
+      } catch {
+        setSubmitError('Could not add expense. Check your connection and try again.')
+      }
     }
-  
     return (
       <div>
         <div className="flex items-center justify-between mb-6">
@@ -62,7 +69,9 @@ interface ExpensesProps {
             Add Expense
           </Button>
         </div>
-  
+  {isLoading ? (
+    <div className="py-12 text-center text-sm text-text-secondary">Loading expenses…</div>
+  ) : (
         <Card title="This month">
           {expenses.map((expense) => {
             const style = categoryStyles[expense.category]
@@ -80,6 +89,7 @@ interface ExpensesProps {
             )
           })}
         </Card>
+        )}
   
         <Modal isOpen={isModalOpen} onClose={closeModal} title="Add Expense">
           <div className="flex flex-col gap-4">
@@ -117,7 +127,7 @@ interface ExpensesProps {
               value={newExpense.amount}
               onChange={(e) => updateField('amount', e.target.value)}
             />
-  
+  {submitError && <p className="text-xs text-danger">{submitError}</p>}
             <div className="flex justify-end gap-3 mt-2">
               <Button variant="secondary" onClick={closeModal}>Cancel</Button>
               <Button onClick={handleCreateExpense}>Add Expense</Button>

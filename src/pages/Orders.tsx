@@ -22,12 +22,14 @@ const statusOptions: OrderStatusFilter[] = [
 ]
 interface OrdersProps {
   orders: Order[]
+  isLoading: boolean
   onAddOrder: (order: Omit<Order, 'id'>) => Promise<void>
 }
-export default function Orders({orders, onAddOrder}: OrdersProps) {
+export default function Orders({orders, isLoading, onAddOrder}: OrdersProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<OrderStatusFilter>('All')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [submitError, setSubmitError] = useState('')
   
   const [newOrder, setNewOrder] = useState({
     customer: '',
@@ -56,6 +58,7 @@ export default function Orders({orders, onAddOrder}: OrdersProps) {
   }
   
   async function handleCreateOrder() {
+    setSubmitError('')
     const order: Omit<Order, 'id'> = {
       customer: newOrder.customer,
       item: newOrder.item,
@@ -65,8 +68,12 @@ export default function Orders({orders, onAddOrder}: OrdersProps) {
       isPaid: false,
     }
   
-    await onAddOrder(order)
-    closeModal()
+    try {
+      await onAddOrder(order)
+      closeModal()
+    } catch {
+      setSubmitError('Could not create order. Check your connection and try again.')
+    }
   }
   
 
@@ -106,7 +113,11 @@ export default function Orders({orders, onAddOrder}: OrdersProps) {
           </select>
         </div>
 
-        <Table<Order>
+
+        {isLoading ? (
+  <div className="py-12 text-center text-sm text-text-secondary">Loading orders…</div>
+) : (
+  <Table<Order>
           data={filteredOrders}
           keyExtractor={(order) => order.id}
           columns={[
@@ -130,7 +141,11 @@ export default function Orders({orders, onAddOrder}: OrdersProps) {
             },
           ]}
         />
+)}
+
+       
       </Card>
+      
       <Modal isOpen={isModalOpen} onClose={closeModal} title="New Order">
   <div className="flex flex-col gap-4">
     <Input
@@ -174,13 +189,14 @@ export default function Orders({orders, onAddOrder}: OrdersProps) {
       value={newOrder.amount}
       onChange={(e) => updateField('amount', e.target.value)}
     />
-
+{submitError && <p className="text-xs text-danger">{submitError}</p>}
     <div className="flex justify-end gap-3 mt-2">
       <Button variant="secondary" onClick={closeModal}>Cancel</Button>
       <Button onClick={handleCreateOrder}>Create Order</Button>
     </div>
   </div>
 </Modal>
+
     </div>
   )
 }
