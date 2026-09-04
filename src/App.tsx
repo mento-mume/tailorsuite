@@ -17,7 +17,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext.tsx";
 import ProtectedRoute from "./components/layout/ProtectedRoute.tsx";
 function App() {
-  const { user, isLoading } = useAuth();
+  const { user, profile, isLoading } = useAuth();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { data: orders, isLoading: ordersLoading } =
     useFirestoreCollection<Order>("orders");
@@ -26,16 +26,43 @@ function App() {
   const { data: expenses, isLoading: expensesLoading } =
     useFirestoreCollection<Expense>("expenses");
 
-  async function addOrder(newOrder: Omit<Order, "id">) {
-    await addDoc(collection(db, "orders"), newOrder);
+  async function addOrder(
+    newOrder: Omit<Order, "id" | "createdBy" | "createdByName" | "createdAt">,
+  ) {
+    await addDoc(collection(db, "orders"), {
+      ...newOrder,
+      createdBy: user!.uid,
+      createdByName: profile?.email ?? "Unknown",
+      createdAt: Date.now(),
+    });
   }
 
-  async function addCustomer(newCustomer: Omit<Customer, "id">) {
-    await addDoc(collection(db, "customers"), newCustomer);
+  async function addCustomer(
+    newCustomer: Omit<
+      Customer,
+      "id" | "createdBy" | "createdByName" | "createdAt"
+    >,
+  ) {
+    await addDoc(collection(db, "customers"), {
+      ...newCustomer,
+      createdBy: user!.uid,
+      createdByName: profile?.email ?? "Unknown",
+      createdAt: Date.now(),
+    });
   }
 
-  async function addExpense(newExpense: Omit<Expense, "id">) {
-    await addDoc(collection(db, "expenses"), newExpense);
+  async function addExpense(
+    newExpense: Omit<
+      Expense,
+      "id" | "createdBy" | "createdByName" | "createdAt"
+    >,
+  ) {
+    await addDoc(collection(db, "expenses"), {
+      ...newExpense,
+      createdBy: user!.uid,
+      createdByName: profile?.email ?? "Unknown",
+      createdAt: Date.now(),
+    });
   }
 
   if (isLoading) {
