@@ -5,10 +5,13 @@ import Table from "../components/ui/Table";
 import Badge from "../components/ui/Badge";
 import Button from "../components/ui/Button";
 import { type Order, type OrderStatusFilter } from "../data/orderTypes";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Eye, Banknote } from "lucide-react";
 import Modal from "../components/ui/Modal";
 import { type OrderStatus } from "../components/ui/Badge";
 import { useSearchParams } from "react-router-dom";
+import { type Customer } from "../data/customerTypes";
+import { type Payment } from "../data/paymentTypes";
+import { getOrderBalance } from "../utils/paymentCalculation";
 
 const statusOptions: OrderStatusFilter[] = [
   "All",
@@ -23,25 +26,58 @@ const statusOptions: OrderStatusFilter[] = [
 ];
 interface OrdersProps {
   orders: Order[];
+  customers: Customer[];
+  payments: Payment[];
   isLoading: boolean;
   onAddOrder: (
     order: Omit<Order, "id" | "createdBy" | "createdByName" | "createdAt">,
   ) => Promise<void>;
+  onUpdateOrder: (
+    orderId: string,
+    updates: Partial<
+      Omit<Order, "id" | "createdBy" | "createdByName" | "createdAt">
+    >,
+  ) => Promise<void>;
+  onDeleteOrder: (orderId: string) => Promise<void>;
+  onAddPayment: (
+    payment: Omit<Payment, "id" | "recordedBy" | "recordedByName">,
+  ) => Promise<void>;
 }
-export default function Orders({ orders, isLoading, onAddOrder }: OrdersProps) {
+export default function Orders({
+  orders,
+  customers,
+  payments,
+  isLoading,
+  onAddOrder,
+  onUpdateOrder,
+  onDeleteOrder,
+  onAddPayment,
+}: OrdersProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<OrderStatusFilter>("All");
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
+  const [deletingOrder, setDeletingOrder] = useState<Order | null>(null);
   const [submitError, setSubmitError] = useState("");
-
+  const [recordingPaymentFor, setRecordingPaymentFor] = useState<Order | null>(
+    null,
+  );
+  const [paymentAmount, setPaymentAmount] = useState("");
   const [newOrder, setNewOrder] = useState({
-    customer: "",
+    customerId: "",
     item: "",
     status: "Received" as OrderStatus,
     dueDate: "",
     amount: "",
   });
+  useEffect(() => {
+    if (searchParams.get("new") === "true") {
+      setIsFormModalOpen(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
@@ -57,10 +93,32 @@ export default function Orders({ orders, isLoading, onAddOrder }: OrdersProps) {
   function updateField(field: keyof typeof newOrder, value: string) {
     setNewOrder((prev) => ({ ...prev, [field]: value }));
   }
-  function closeModal() {
-    setIsModalOpen(false);
+  function openViewModal(order: Order) {
+    setViewingOrder(order);
+  }
+
+  function openEditModal(order: Order) {
     setNewOrder({
-      customer: "",
+      customerId: order.customerId,
+      item: order.item,
+      status: order.status,
+      dueDate: order.dueDate,
+      amount: order.amount.toString(),
+    });
+    setEditingOrderId(order.id);
+    setIsFormModalOpen(true);
+  }
+
+  function openDeleteConfirm(order: Order) {
+    setDeletingOrder(order);
+  }
+
+  function closeFormModal() {
+    setIsFormModalOpen(false);
+    setEditingOrderId(null);
+    setSubmitError("");
+    setNewOrder({
+      customerId: "",
       item: "",
       status: "Received",
       dueDate: "",
@@ -68,35 +126,78 @@ export default function Orders({ orders, isLoading, onAddOrder }: OrdersProps) {
     });
   }
 
-  async function handleCreateOrder() {
+  async function handleSubmitOrder() {
     setSubmitError("");
-    const order: Omit<
-      Order,
-      "id" | "createdBy" | "createdByName" | "createdAt"
-    > = {
-      customer: newOrder.customer,
-      item: newOrder.item,
-      status: newOrder.status,
-      dueDate: newOrder.dueDate,
-      amount: Number(newOrder.amount) || 0,
-      isPaid: false,
-    };
+
+    const selectedCustomer = customers.find(
+      (c) => c.id === newOrder.customerId,
+    );
+    if (!selectedCustomer) {
+      setSubmitError("Please select a customer.");
+      return;
+    }
 
     try {
-      await onAddOrder(order);
-      closeModal();
+      if (editingOrderId) {
+        await onUpdateOrder(editingOrderId, {
+          customerId: newOrder.customerId,
+          customer: selectedCustomer.name,
+          item: newOrder.item,
+          status: newOrder.status,
+          dueDate: newOrder.dueDate,
+          amount: Number(newOrder.amount) || 0,
+        });
+      } else {
+        await onAddOrder({
+          customerId: newOrder.customerId,
+          customer: selectedCustomer.name,
+          item: newOrder.item,
+          status: newOrder.status,
+          dueDate: newOrder.dueDate,
+          amount: Number(newOrder.amount) || 0,
+        });
+      }
+      closeFormModal();
     } catch {
       setSubmitError(
-        "Could not create order. Check your connection and try again.",
+        "Could not save order. Check your connection and try again.",
       );
     }
   }
-  useEffect(() => {
-    if (searchParams.get("new") === "true") {
-      setIsModalOpen(true);
-      setSearchParams({}, { replace: true });
+
+  async function confirmDelete() {
+    if (!deletingOrder) return;
+    try {
+      await onDeleteOrder(deletingOrder.id);
+      setDeletingOrder(null);
+    } catch {
+      setSubmitError(
+        "Could not delete order. Check your connection and try again.",
+      );
+      setDeletingOrder(null);
     }
-  }, [searchParams, setSearchParams]);
+  }
+  async function handleRecordPayment() {
+    if (!recordingPaymentFor) return;
+    const amount = Number(paymentAmount) || 0;
+    if (amount <= 0) {
+      setSubmitError("Enter a valid payment amount.");
+      return;
+    }
+
+    try {
+      await onAddPayment({
+        orderId: recordingPaymentFor.id,
+        customerId: recordingPaymentFor.customerId,
+        amount,
+        paidAt: Date.now(),
+      });
+      setRecordingPaymentFor(null);
+      setPaymentAmount("");
+    } catch {
+      setSubmitError("Could not record payment. Try again.");
+    }
+  }
 
   return (
     <div>
@@ -107,7 +208,10 @@ export default function Orders({ orders, isLoading, onAddOrder }: OrdersProps) {
             Track every order from received to delivered.
           </p>
         </div>
-        <Button icon={<Plus size={18} />} onClick={() => setIsModalOpen(true)}>
+        <Button
+          icon={<Plus size={18} />}
+          onClick={() => setIsFormModalOpen(true)}
+        >
           New Order
         </Button>
       </div>
@@ -162,13 +266,32 @@ export default function Orders({ orders, isLoading, onAddOrder }: OrdersProps) {
               {
                 header: "",
                 render: (order) => (
-                  <Button
-                    variant="secondary"
-                    className="h-8 px-3 text-sm"
-                    onClick={() => console.log("view order", order.id)}
-                  >
-                    View
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => openViewModal(order)}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:bg-gray-100"
+                    >
+                      <Eye size={16} />
+                    </button>
+                    <button
+                      onClick={() => openEditModal(order)}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:bg-gray-100"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => openDeleteConfirm(order)}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-danger hover:bg-red-50"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                    <button
+                      onClick={() => setRecordingPaymentFor(order)}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-success hover:bg-green-50"
+                    >
+                      <Banknote size={16} />
+                    </button>
+                  </div>
                 ),
               },
             ]}
@@ -176,14 +299,29 @@ export default function Orders({ orders, isLoading, onAddOrder }: OrdersProps) {
         )}
       </Card>
 
-      <Modal isOpen={isModalOpen} onClose={closeModal} title="New Order">
+      <Modal
+        isOpen={isFormModalOpen}
+        onClose={closeFormModal}
+        title={editingOrderId ? "Edit Order" : "New Order"}
+      >
         <div className="flex flex-col gap-4">
-          <Input
-            label="Customer name"
-            placeholder="e.g. Chidi Nwosu"
-            value={newOrder.customer}
-            onChange={(e) => updateField("customer", e.target.value)}
-          />
+          <div>
+            <label className="text-sm font-medium text-text-primary block mb-1.5">
+              Customer
+            </label>
+            <select
+              value={newOrder.customerId}
+              onChange={(e) => updateField("customerId", e.target.value)}
+              className="h-11 w-full rounded-[10px] border border-[#E5E7EB] px-3.5 text-sm text-text-primary bg-white focus:outline-none focus:border-primary"
+            >
+              <option value="">Select a customer…</option>
+              {customers.map((customer) => (
+                <option key={customer.id} value={customer.id}>
+                  {customer.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <Input
             label="Item"
@@ -217,7 +355,6 @@ export default function Orders({ orders, isLoading, onAddOrder }: OrdersProps) {
             value={newOrder.dueDate}
             onChange={(e) => updateField("dueDate", e.target.value)}
           />
-
           <Input
             label="Amount (₦)"
             type="number"
@@ -225,14 +362,154 @@ export default function Orders({ orders, isLoading, onAddOrder }: OrdersProps) {
             value={newOrder.amount}
             onChange={(e) => updateField("amount", e.target.value)}
           />
+
           {submitError && <p className="text-xs text-danger">{submitError}</p>}
+
           <div className="flex justify-end gap-3 mt-2">
-            <Button variant="secondary" onClick={closeModal}>
+            <Button variant="secondary" onClick={closeFormModal}>
               Cancel
             </Button>
-            <Button onClick={handleCreateOrder}>Create Order</Button>
+            <Button onClick={handleSubmitOrder}>
+              {editingOrderId ? "Save Changes" : "Create Order"}
+            </Button>
           </div>
         </div>
+      </Modal>
+
+      <Modal
+        isOpen={!!deletingOrder}
+        onClose={() => setDeletingOrder(null)}
+        title="Delete Order"
+      >
+        {deletingOrder && (
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-text-secondary">
+              Delete the order for{" "}
+              <span className="font-semibold text-text-primary">
+                {deletingOrder.customer}
+              </span>
+              ? This can't be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setDeletingOrder(null)}
+              >
+                Cancel
+              </Button>
+              <Button variant="danger" onClick={confirmDelete}>
+                Delete
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+      <Modal
+        isOpen={!!viewingOrder}
+        onClose={() => setViewingOrder(null)}
+        title="Order Details"
+      >
+        {viewingOrder &&
+          (() => {
+            const orderPayments = payments.filter(
+              (p) => p.orderId === viewingOrder.id,
+            );
+            const balance = getOrderBalance(viewingOrder, payments);
+
+            return (
+              <div className="flex flex-col gap-3">
+                <div>
+                  <span className="text-xs text-text-secondary">Customer</span>
+                  <p className="text-sm font-medium">{viewingOrder.customer}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-text-secondary">Item</span>
+                  <p className="text-sm font-medium">{viewingOrder.item}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-text-secondary">Status</span>
+                  <div className="mt-1">
+                    <Badge status={viewingOrder.status} />
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs text-text-secondary">Due date</span>
+                  <p className="text-sm font-medium">{viewingOrder.dueDate}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-text-secondary">Amount</span>
+                  <p className="text-sm font-medium">
+                    ₦{viewingOrder.amount.toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-xs text-text-secondary">Balance</span>
+                  <p
+                    className={`text-sm font-medium ${balance > 0 ? "text-danger" : "text-success"}`}
+                  >
+                    ₦{balance.toLocaleString()}
+                  </p>
+                </div>
+
+                {orderPayments.length > 0 && (
+                  <div>
+                    <span className="text-xs text-text-secondary">
+                      Payment history
+                    </span>
+                    {orderPayments.map((p) => (
+                      <div
+                        key={p.id}
+                        className="flex justify-between text-sm py-1"
+                      >
+                        <span>{new Date(p.paidAt).toLocaleDateString()}</span>
+                        <span>₦{p.amount.toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+      </Modal>
+
+      <Modal
+        isOpen={!!recordingPaymentFor}
+        onClose={() => setRecordingPaymentFor(null)}
+        title="Record Payment"
+      >
+        {recordingPaymentFor &&
+          (() => {
+            const balance = getOrderBalance(recordingPaymentFor, payments);
+            return (
+              <div className="flex flex-col gap-4">
+                <p className="text-sm text-text-secondary">
+                  Balance remaining:{" "}
+                  <span className="font-semibold text-text-primary">
+                    ₦{balance.toLocaleString()}
+                  </span>
+                </p>
+                <Input
+                  label="Amount received (₦)"
+                  type="number"
+                  placeholder="0"
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(e.target.value)}
+                />
+                {submitError && (
+                  <p className="text-xs text-danger">{submitError}</p>
+                )}
+                <div className="flex justify-end gap-3">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setRecordingPaymentFor(null)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={handleRecordPayment}>Record Payment</Button>
+                </div>
+              </div>
+            );
+          })()}
       </Modal>
     </div>
   );

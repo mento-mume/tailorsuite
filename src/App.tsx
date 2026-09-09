@@ -8,7 +8,13 @@ import Customers from "./pages/Customer";
 import Expenses from "./pages/Expenses";
 import { db } from "./lib/firebase";
 import Login from "./pages/Login";
-import { collection, addDoc } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
 import { type Order } from "./data/orderTypes";
 import { useFirestoreCollection } from "./hooks/useFirestoreCollection";
 import { type Customer } from "./data/customerTypes";
@@ -16,6 +22,8 @@ import { type Expense } from "./data/expensesTypes";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext.tsx";
 import ProtectedRoute from "./components/layout/ProtectedRoute.tsx";
+import { type Payment } from "./data/paymentTypes";
+
 function App() {
   const { user, profile, isLoading } = useAuth();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -25,6 +33,8 @@ function App() {
     useFirestoreCollection<Customer>("customers");
   const { data: expenses, isLoading: expensesLoading } =
     useFirestoreCollection<Expense>("expenses");
+  const { data: payments, isLoading: paymentsLoading } =
+    useFirestoreCollection<Payment>("payments");
 
   async function addOrder(
     newOrder: Omit<Order, "id" | "createdBy" | "createdByName" | "createdAt">,
@@ -36,7 +46,18 @@ function App() {
       createdAt: Date.now(),
     });
   }
+  async function updateOrder(
+    orderId: string,
+    updates: Partial<
+      Omit<Order, "id" | "createdBy" | "createdByName" | "createdAt">
+    >,
+  ) {
+    await updateDoc(doc(db, "orders", orderId), updates);
+  }
 
+  async function deleteOrder(orderId: string) {
+    await deleteDoc(doc(db, "orders", orderId));
+  }
   async function addCustomer(
     newCustomer: Omit<
       Customer,
@@ -50,7 +71,16 @@ function App() {
       createdAt: Date.now(),
     });
   }
+  async function updateCustomer(
+    customerId: string,
+    updates: Partial<Omit<Customer, "id">>,
+  ) {
+    await updateDoc(doc(db, "customers", customerId), updates);
+  }
 
+  async function deleteCustomer(customerId: string) {
+    await deleteDoc(doc(db, "customers", customerId));
+  }
   async function addExpense(
     newExpense: Omit<
       Expense,
@@ -76,7 +106,19 @@ function App() {
   if (!user) {
     return <Login />;
   }
+  async function addPayment(
+    newPayment: Omit<Payment, "id" | "recordedBy" | "recordedByName">,
+  ) {
+    await addDoc(collection(db, "payments"), {
+      ...newPayment,
+      recordedBy: user!.uid,
+      recordedByName: profile?.email ?? "Unknown",
+    });
+  }
 
+  async function deletePayment(paymentId: string) {
+    await deleteDoc(doc(db, "payments", paymentId));
+  }
   return (
     <div className="flex">
       <Sidebar isCollapsed={isSidebarCollapsed} />
@@ -102,8 +144,15 @@ function App() {
                 <ProtectedRoute>
                   <Orders
                     orders={orders}
-                    isLoading={ordersLoading}
+                    customers={customers}
+                    payments={payments}
+                    isLoading={
+                      ordersLoading || customersLoading || paymentsLoading
+                    }
                     onAddOrder={addOrder}
+                    onUpdateOrder={updateOrder}
+                    onDeleteOrder={deleteOrder}
+                    onAddPayment={addPayment}
                   />
                 </ProtectedRoute>
               }
@@ -114,8 +163,11 @@ function App() {
                 <ProtectedRoute>
                   <Customers
                     customers={customers}
-                    isLoading={customersLoading}
+                    orders={orders}
+                    isLoading={customersLoading || ordersLoading}
                     onAddCustomer={addCustomer}
+                    onUpdateCustomer={updateCustomer}
+                    onDeleteCustomer={deleteCustomer}
                   />
                 </ProtectedRoute>
               }
