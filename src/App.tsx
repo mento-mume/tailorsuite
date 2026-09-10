@@ -94,6 +94,18 @@ function App() {
       createdAt: Date.now(),
     });
   }
+  async function updateExpense(
+    expenseId: string,
+    updates: Partial<
+      Omit<Expense, "id" | "createdBy" | "createdByName" | "createdAt">
+    >,
+  ) {
+    await updateDoc(doc(db, "expenses", expenseId), updates);
+  }
+
+  async function deleteExpense(expenseId: string) {
+    await deleteDoc(doc(db, "expenses", expenseId));
+  }
 
   if (isLoading) {
     return (
@@ -134,7 +146,11 @@ function App() {
               path="/"
               element={
                 <ProtectedRoute>
-                  <Dashboard orders={orders} isLoading={ordersLoading} />
+                  <Dashboard
+                    orders={orders}
+                    payments={payments}
+                    isLoading={ordersLoading || paymentsLoading}
+                  />
                 </ProtectedRoute>
               }
             />
@@ -180,6 +196,8 @@ function App() {
                     expenses={expenses}
                     isLoading={expensesLoading}
                     onAddExpense={addExpense}
+                    onUpdateExpense={updateExpense}
+                    onDeleteExpense={deleteExpense}
                   />
                 </ProtectedRoute>
               }
@@ -188,7 +206,11 @@ function App() {
               path="/reports"
               element={
                 <ProtectedRoute>
-                  <Reports orders={orders} isLoading={ordersLoading} />
+                  <Reports
+                    orders={orders}
+                    payments={payments}
+                    isLoading={ordersLoading || paymentsLoading}
+                  />
                 </ProtectedRoute>
               }
             />

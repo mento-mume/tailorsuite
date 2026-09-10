@@ -4,6 +4,9 @@ import Badge from "../components/ui/Badge";
 import Button from "../components/ui/Button";
 import { type Order } from "../data/orderTypes";
 import { useNavigate, Link } from "react-router-dom";
+import { type Payment } from "../data/paymentTypes";
+import { getOrderBalance } from "../utils/paymentCalculation";
+
 import {
   ClipboardList,
   CheckCircle2,
@@ -14,9 +17,14 @@ import {
 
 interface DashboardProps {
   orders: Order[];
+  payments: Payment[];
   isLoading: boolean;
 }
-export default function Dashboard({ orders, isLoading }: DashboardProps) {
+export default function Dashboard({
+  orders,
+  payments,
+  isLoading,
+}: DashboardProps) {
   const navigate = useNavigate();
   const todaysOrders = orders.slice(0, 4);
 
@@ -27,7 +35,7 @@ export default function Dashboard({ orders, isLoading }: DashboardProps) {
     .slice(0, 3);
 
   const outstandingPayments = orders.filter(
-    (order) => !order.isPaid && order.amount > 0,
+    (order) => getOrderBalance(order, payments) > 0,
   );
 
   const activeOrdersCount = orders.filter(
@@ -35,7 +43,7 @@ export default function Dashboard({ orders, isLoading }: DashboardProps) {
   ).length;
   const readyCount = orders.filter((o) => o.status === "Ready").length;
   const totalOwed = outstandingPayments.reduce(
-    (sum, order) => sum + order.amount,
+    (sum, order) => sum + getOrderBalance(order, payments),
     0,
   );
   const recentActivity = [...orders]
@@ -193,7 +201,7 @@ export default function Dashboard({ orders, isLoading }: DashboardProps) {
                 >
                   <p className="text-sm">{order.customer}</p>
                   <p className="text-xs font-semibold text-danger">
-                    ₦{order.amount.toLocaleString()}
+                    ₦{getOrderBalance(order, payments).toLocaleString()}
                   </p>
                 </div>
               ))}

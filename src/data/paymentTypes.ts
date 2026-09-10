@@ -1,4 +1,3 @@
-// src/data/paymentTypes.ts
 export interface Payment {
   id: string;
   orderId: string;
