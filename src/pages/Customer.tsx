@@ -56,6 +56,24 @@ export default function Customers({
 
   const [submitError, setSubmitError] = useState("");
   const [newCustomer, setNewCustomer] = useState({ name: "", phone: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [duplicateCustomer, setDuplicateCustomer] = useState<Customer | null>(
+    null,
+  );
+
+  function normalizePhone(phone: string) {
+    return phone.replace(/\D/g, "");
+  }
+
+  function findDuplicateByPhone(phone: string, excludeId?: string) {
+    const normalized = normalizePhone(phone);
+    if (!normalized) return null;
+    return (
+      customers.find(
+        (c) => c.id !== excludeId && normalizePhone(c.phone) === normalized,
+      ) ?? null
+    );
+  }
 
   function getAvatarColor(index: number) {
     return avatarColors[index % avatarColors.length];
@@ -71,6 +89,7 @@ export default function Customers({
 
   function updateField(field: keyof typeof newCustomer, value: string) {
     setNewCustomer((prev) => ({ ...prev, [field]: value }));
+    if (field === "phone") setDuplicateCustomer(null);
   }
 
   function openViewModal(customer: Customer) {
@@ -92,11 +111,26 @@ export default function Customers({
     setEditingCustomerId(null);
     setSubmitError("");
     setNewCustomer({ name: "", phone: "" });
+    setDuplicateCustomer(null);
+    setIsSubmitting(false);
   }
 
   async function handleSubmitCustomer() {
+    if (isSubmitting) return;
     setSubmitError("");
 
+    if (!duplicateCustomer) {
+      const duplicate = findDuplicateByPhone(
+        newCustomer.phone,
+        editingCustomerId ?? undefined,
+      );
+      if (duplicate) {
+        setDuplicateCustomer(duplicate);
+        return;
+      }
+    }
+
+    setIsSubmitting(true);
     try {
       if (editingCustomerId) {
         await onUpdateCustomer(editingCustomerId, {
@@ -111,6 +145,7 @@ export default function Customers({
       }
       closeFormModal();
     } catch {
+      setIsSubmitting(false);
       setSubmitError(
         "Could not save customer. Check your connection and try again.",
       );
@@ -247,13 +282,37 @@ export default function Customers({
             value={newCustomer.phone}
             onChange={(e) => updateField("phone", e.target.value)}
           />
+          {duplicateCustomer && (
+            <div className="flex flex-col gap-2 rounded-[10px] bg-amber-50 border border-amber-200 px-3.5 py-3 text-sm text-amber-800">
+              <p>
+                A customer named{" "}
+                <span className="font-semibold">{duplicateCustomer.name}</span>{" "}
+                already has this phone number.
+              </p>
+              <button
+                type="button"
+                className="text-sm font-semibold text-primary underline self-start"
+                onClick={() => {
+                  const existing = duplicateCustomer;
+                  closeFormModal();
+                  openViewModal(existing);
+                }}
+              >
+                View existing customer
+              </button>
+            </div>
+          )}
           {submitError && <p className="text-xs text-danger">{submitError}</p>}
           <div className="flex justify-end gap-3 mt-2">
             <Button variant="secondary" onClick={closeFormModal}>
               Cancel
             </Button>
-            <Button onClick={handleSubmitCustomer}>
-              {editingCustomerId ? "Save Changes" : "Create Customer"}
+            <Button onClick={handleSubmitCustomer} isLoading={isSubmitting}>
+              {duplicateCustomer
+                ? "Add Anyway"
+                : editingCustomerId
+                  ? "Save Changes"
+                  : "Create Customer"}
             </Button>
           </div>
         </div>

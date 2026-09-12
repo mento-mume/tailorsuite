@@ -57,6 +57,7 @@ export default function Expenses({
   const [viewingExpense, setViewingExpense] = useState<Expense | null>(null);
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
   const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newExpense, setNewExpense] = useState({
     name: "",
     category: "Materials" as ExpenseCategory,
@@ -91,12 +92,15 @@ export default function Expenses({
     setIsFormModalOpen(false);
     setEditingExpenseId(null);
     setSubmitError("");
+    setIsSubmitting(false);
     setNewExpense({ name: "", category: "Materials", date: "", amount: "" });
   }
 
   async function handleSubmitExpense() {
+    if (isSubmitting) return;
     setSubmitError("");
 
+    setIsSubmitting(true);
     try {
       if (editingExpenseId) {
         await onUpdateExpense(editingExpenseId, {
@@ -115,6 +119,7 @@ export default function Expenses({
       }
       closeFormModal();
     } catch {
+      setIsSubmitting(false);
       setSubmitError(
         "Could not save expense. Check your connection and try again.",
       );
@@ -257,7 +262,7 @@ export default function Expenses({
             <Button variant="secondary" onClick={closeFormModal}>
               Cancel
             </Button>
-            <Button onClick={handleSubmitExpense}>
+            <Button onClick={handleSubmitExpense} isLoading={isSubmitting}>
               {editingExpenseId ? "Save Changes" : "Add Expense"}
             </Button>
           </div>

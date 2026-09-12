@@ -42,20 +42,42 @@ export default function Staff({
   const [inviteError, setInviteError] = useState("");
   const [generatedLink, setGeneratedLink] = useState("");
   const [isCopied, setIsCopied] = useState(false);
+  const [wasReplaced, setWasReplaced] = useState(false);
 
   const pendingInvites = invites.filter((invite) => invite.status === "pending");
 
+  function normalizeEmail(value: string) {
+    return value.trim().toLowerCase();
+  }
+
   async function handleInvite() {
     setInviteError("");
-    if (!email.trim()) {
+    const normalizedEmail = normalizeEmail(email);
+    if (!normalizedEmail) {
       setInviteError("Enter an email address.");
       return;
     }
 
+    const existingStaff = staff.find(
+      (member) => member.email.toLowerCase() === normalizedEmail,
+    );
+    if (existingStaff) {
+      setInviteError("This email is already on your team.");
+      return;
+    }
+
+    const existingInvite = pendingInvites.find(
+      (invite) => invite.email.toLowerCase() === normalizedEmail,
+    );
+
     setIsInviting(true);
     try {
-      const token = await onInvite(email.trim(), role);
+      if (existingInvite) {
+        await onRevokeInvite(existingInvite.id);
+      }
+      const token = await onInvite(normalizedEmail, role);
       setGeneratedLink(`${window.location.origin}/accept-invite/${token}`);
+      setWasReplaced(!!existingInvite);
       setEmail("");
       setIsCopied(false);
     } catch {
@@ -109,11 +131,18 @@ export default function Staff({
         </div>
 
         {generatedLink && (
-          <div className="mt-4 flex items-center gap-2 bg-gray-50 rounded-[10px] p-3">
-            <span className="text-sm flex-1 truncate">{generatedLink}</span>
-            <Button variant="secondary" onClick={handleCopy}>
-              {isCopied ? <Check size={18} /> : <Copy size={18} />}
-            </Button>
+          <div className="mt-4 flex flex-col gap-2">
+            {wasReplaced && (
+              <p className="text-xs text-text-secondary">
+                Replaced the previous pending invite for this email.
+              </p>
+            )}
+            <div className="flex items-center gap-2 bg-gray-50 rounded-[10px] p-3">
+              <span className="text-sm flex-1 truncate">{generatedLink}</span>
+              <Button variant="secondary" onClick={handleCopy}>
+                {isCopied ? <Check size={18} /> : <Copy size={18} />}
+              </Button>
+            </div>
           </div>
         )}
 

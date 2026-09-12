@@ -61,6 +61,7 @@ export default function Orders({
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
   const [deletingOrder, setDeletingOrder] = useState<Order | null>(null);
   const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [recordingPaymentFor, setRecordingPaymentFor] = useState<Order | null>(
     null,
   );
@@ -117,6 +118,7 @@ export default function Orders({
     setIsFormModalOpen(false);
     setEditingOrderId(null);
     setSubmitError("");
+    setIsSubmitting(false);
     setNewOrder({
       customerId: "",
       item: "",
@@ -127,6 +129,7 @@ export default function Orders({
   }
 
   async function handleSubmitOrder() {
+    if (isSubmitting) return;
     setSubmitError("");
 
     const selectedCustomer = customers.find(
@@ -137,6 +140,7 @@ export default function Orders({
       return;
     }
 
+    setIsSubmitting(true);
     try {
       if (editingOrderId) {
         await onUpdateOrder(editingOrderId, {
@@ -159,6 +163,7 @@ export default function Orders({
       }
       closeFormModal();
     } catch {
+      setIsSubmitting(false);
       setSubmitError(
         "Could not save order. Check your connection and try again.",
       );
@@ -446,7 +451,7 @@ export default function Orders({
             <Button variant="secondary" onClick={closeFormModal}>
               Cancel
             </Button>
-            <Button onClick={handleSubmitOrder}>
+            <Button onClick={handleSubmitOrder} isLoading={isSubmitting}>
               {editingOrderId ? "Save Changes" : "Create Order"}
             </Button>
           </div>
