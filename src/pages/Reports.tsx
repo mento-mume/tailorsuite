@@ -23,14 +23,14 @@ export default function Reports({ orders, payments, isLoading }: ReportsProps) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-lg font-semibold">Reports</h1>
           <p className="text-sm text-text-secondary mt-0.5">
             Revenue and order trends over time.
           </p>
         </div>
-        <select className="h-11 rounded-[10px] border border-[#E5E7EB] px-3.5 text-sm bg-white focus:outline-none focus:border-primary">
+        <select className="h-11 w-full sm:w-auto rounded-[10px] border border-[#E5E7EB] px-3.5 text-sm bg-white focus:outline-none focus:border-primary">
           <option>Last 6 months</option>
           <option>This year</option>
         </select>
@@ -41,7 +41,7 @@ export default function Reports({ orders, payments, isLoading }: ReportsProps) {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-4 gap-6 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 mb-6">
             <Card>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm text-text-secondary font-medium">

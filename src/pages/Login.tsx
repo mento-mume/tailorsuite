@@ -25,8 +25,8 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-app-bg">
-      <Card className="w-[380px]">
+    <div className="min-h-screen flex items-center justify-center bg-app-bg p-4">
+      <Card className="w-full max-w-[380px]">
         <h1 className="text-lg font-semibold mb-1">Sign in to TailorSuite</h1>
         <p className="text-sm text-text-secondary mb-6">Welcome back.</p>
 

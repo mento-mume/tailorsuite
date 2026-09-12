@@ -140,7 +140,7 @@ export default function Customers({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-lg font-semibold">Customers</h1>
           <p className="text-sm text-text-secondary mt-0.5">
@@ -148,6 +148,7 @@ export default function Customers({
           </p>
         </div>
         <Button
+          className="w-full sm:w-auto shrink-0"
           icon={<Plus size={18} />}
           onClick={() => setIsFormModalOpen(true)}
         >
@@ -160,7 +161,7 @@ export default function Customers({
           Loading customers…
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
           {customers.map((customer, index) => {
             const { ordersCount, amountOwed } = getCustomerStats(customer.id);
 

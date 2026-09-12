@@ -30,11 +30,11 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl w-[600px] max-w-[90vw] p-6"
+        className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:w-[600px] max-w-[100vw] sm:max-w-[90vw] p-5 sm:p-6 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">

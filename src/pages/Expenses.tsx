@@ -135,7 +135,7 @@ export default function Expenses({
   }
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-lg font-semibold">Expenses</h1>
           <p className="text-sm text-text-secondary mt-0.5">
@@ -143,6 +143,7 @@ export default function Expenses({
           </p>
         </div>
         <Button
+          className="w-full sm:w-auto shrink-0"
           icon={<Plus size={18} />}
           onClick={() => setIsFormModalOpen(true)}
         >
@@ -160,7 +161,7 @@ export default function Expenses({
             return (
               <div
                 key={expense.id}
-                className="flex items-center gap-4 py-4 border-b border-[#E5E7EB] last:border-b-0"
+                className="flex flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-4 py-4 border-b border-[#E5E7EB] last:border-b-0"
               >
                 <div
                   className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${style.bg} ${style.text}`}

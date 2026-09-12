@@ -61,7 +61,7 @@ export default function Dashboard({
 
   return (
     <>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-lg font-semibold">Dashboard</h1>
           <p className="text-sm text-text-secondary mt-0.5">
@@ -69,6 +69,7 @@ export default function Dashboard({
           </p>
         </div>
         <Button
+          className="w-full sm:w-auto shrink-0"
           icon={<Plus size={18} />}
           onClick={() => navigate("/orders?new=true")}
         >
@@ -82,7 +83,7 @@ export default function Dashboard({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-4 gap-6 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 mb-6">
             <Card>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm text-text-secondary font-medium">
@@ -134,7 +135,7 @@ export default function Dashboard({
             </Card>
           </div>
 
-          <div className="grid grid-cols-[1.6fr_1fr] gap-6 mb-6">
+          <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-4 md:gap-6 mb-6">
             <Card title="Today's Orders">
               <Link
                 to="/orders"
@@ -178,17 +179,17 @@ export default function Dashboard({
             </Card>
           </div>
 
-          <div className="grid grid-cols-[1.6fr_1fr] gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-4 md:gap-6">
             <Card title="Upcoming Deliveries">
               {upcomingDeliveries.map((order) => (
                 <div
                   key={order.id}
-                  className="flex items-center justify-between py-2.5 border-b border-[#E5E7EB] last:border-b-0"
+                  className="flex items-start sm:items-center justify-between gap-3 py-2.5 border-b border-[#E5E7EB] last:border-b-0"
                 >
                   <p className="text-sm">
                     {order.customer} — {order.item}
                   </p>
-                  <p className="text-xs text-text-secondary">{order.dueDate}</p>
+                  <p className="text-xs text-text-secondary shrink-0">{order.dueDate}</p>
                 </div>
               ))}
             </Card>

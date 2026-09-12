@@ -201,7 +201,7 @@ export default function Orders({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-lg font-semibold">Orders</h1>
           <p className="text-sm text-text-secondary mt-0.5">
@@ -209,6 +209,7 @@ export default function Orders({
           </p>
         </div>
         <Button
+          className="w-full sm:w-auto shrink-0"
           icon={<Plus size={18} />}
           onClick={() => setIsFormModalOpen(true)}
         >
@@ -217,7 +218,7 @@ export default function Orders({
       </div>
 
       <Card>
-        <div className="flex items-center justify-between gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <div className="max-w-[280px] w-full">
             <Input
               icon={<Search size={18} />}
@@ -365,7 +366,7 @@ export default function Orders({
 
           {submitError && <p className="text-xs text-danger">{submitError}</p>}
 
-          <div className="flex justify-end gap-3 mt-2">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-2">
             <Button variant="secondary" onClick={closeFormModal}>
               Cancel
             </Button>

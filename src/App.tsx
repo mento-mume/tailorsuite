@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Sidebar from "./components/layout/Sidebar";
 import TopNav from "./components/layout/TopNav";
 import Dashboard from "./pages/Dashboard";
@@ -19,14 +19,16 @@ import { type Order } from "./data/orderTypes";
 import { useFirestoreCollection } from "./hooks/useFirestoreCollection";
 import { type Customer } from "./data/customerTypes";
 import { type Expense } from "./data/expensesTypes";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./context/AuthContext.tsx";
 import ProtectedRoute from "./components/layout/ProtectedRoute.tsx";
 import { type Payment } from "./data/paymentTypes";
 import type { UserProfile } from "./data/roleTypes.ts";
 function App() {
   const { user, profile, isLoading } = useAuth();
+  const location = useLocation();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const { data: orders, isLoading: ordersLoading } =
     useFirestoreCollection<Order>("orders");
   const { data: customers, isLoading: customersLoading } =
@@ -107,6 +109,17 @@ function App() {
     await deleteDoc(doc(db, "expenses", expenseId));
   }
 
+  useEffect(() => {
+    setIsMobileNavOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    document.body.style.overflow = isMobileNavOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileNavOpen]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -138,16 +151,36 @@ function App() {
     if (!user) return;
     await updateDoc(doc(db, "Users", user.uid), updates);
   }
+  function handleToggleSidebar() {
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      setIsSidebarCollapsed((prev) => !prev);
+    } else {
+      setIsMobileNavOpen((prev) => !prev);
+    }
+  }
+
   return (
-    <div className="flex">
-      <Sidebar isCollapsed={isSidebarCollapsed} />
-      <div className="flex-1 flex flex-col">
+    <div className="flex min-h-screen">
+      {isMobileNavOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+          aria-label="Close navigation"
+          onClick={() => setIsMobileNavOpen(false)}
+        />
+      )}
+      <Sidebar
+        isCollapsed={isSidebarCollapsed}
+        isMobileOpen={isMobileNavOpen}
+        onNavigate={() => setIsMobileNavOpen(false)}
+      />
+      <div className="flex-1 flex flex-col min-w-0">
         <TopNav
           profile={profile}
           onUpdateProfile={updateOwnProfile}
-          onToggleSidebar={() => setIsSidebarCollapsed((prev) => !prev)}
+          onToggleSidebar={handleToggleSidebar}
         />
-        <main className="flex-1 p-8">
+        <main className="flex-1 p-4 md:p-6 lg:p-8">
           <Routes>
             <Route
               path="/"

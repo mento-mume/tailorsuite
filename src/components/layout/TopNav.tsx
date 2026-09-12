@@ -225,15 +225,16 @@ export default function TopNav({
   }, [isPanelOpen]);
 
   return (
-    <header className="h-[72px] bg-white border-b border-[#E5E7EB] flex items-center px-8 gap-6">
+    <header className="h-14 lg:h-[72px] sticky top-0 z-20 bg-white border-b border-[#E5E7EB] flex items-center px-4 lg:px-8 gap-3 lg:gap-6">
       <button
-        className="w-9 h-9 rounded-[10px] flex items-center justify-center text-text-secondary hover:bg-gray-100"
+        className="w-9 h-9 rounded-[10px] flex items-center justify-center text-text-secondary hover:bg-gray-100 shrink-0"
         onClick={onToggleSidebar}
+        aria-label="Toggle navigation"
       >
         <PanelLeft size={20} />
       </button>
 
-      <div className="max-w-[360px] w-full">
+      <div className="max-w-[360px] w-full hidden md:block">
         <Input
           icon={<Search size={18} />}
           placeholder="Search orders, customers…"
@@ -241,13 +242,13 @@ export default function TopNav({
         />
       </div>
 
-      <div className="flex items-center gap-5 ml-auto">
+      <div className="flex items-center gap-2 sm:gap-5 ml-auto">
         <button className="relative w-10 h-10 rounded-full flex items-center justify-center text-text-secondary hover:bg-gray-100">
           <Bell size={20} />
           <span className="absolute top-2 right-2.5 w-2 h-2 rounded-full bg-danger border-2 border-white" />
         </button>
 
-        <div ref={panelRef} className="relative pl-4 border-l border-[#E5E7EB]">
+        <div ref={panelRef} className="relative sm:pl-4 sm:border-l border-[#E5E7EB]">
           <button
             onClick={() => setIsPanelOpen((prev) => !prev)}
             className="flex items-center gap-2.5"
@@ -255,7 +256,7 @@ export default function TopNav({
             <div className="w-9 h-9 rounded-full bg-secondary text-white flex items-center justify-center text-sm font-semibold">
               {initials}
             </div>
-            <div className="text-left">
+            <div className="text-left hidden sm:block">
               <p className="text-sm font-semibold">{displayName}</p>
               <p className="text-xs text-text-secondary capitalize">
                 {profile?.role}
@@ -264,7 +265,7 @@ export default function TopNav({
           </button>
 
           {isPanelOpen && (
-            <div className="absolute right-0 top-[calc(100%+12px)] w-[320px] bg-white rounded-xl border border-[#E5E7EB] shadow-lg p-5 z-50">
+            <div className="absolute right-0 top-[calc(100%+12px)] w-[min(320px,calc(100vw-2rem))] bg-white rounded-xl border border-[#E5E7EB] shadow-lg p-5 z-50">
               {isEditing ? (
                 <div className="flex flex-col gap-4">
                   <Input

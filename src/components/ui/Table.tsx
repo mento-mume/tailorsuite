@@ -1,15 +1,16 @@
 interface Column<T> {
-    header: string
-    render: (row: T) => React.ReactNode
-  }
-  interface TableProps<T> {
-    columns: Column<T>[]
-    data: T[]
-    keyExtractor: (row: T) => string
-  }
-  export default function Table<T>({ columns, data, keyExtractor }: TableProps<T>) {
-    return (
-      <table className="w-full border-collapse">
+  header: string
+  render: (row: T) => React.ReactNode
+}
+interface TableProps<T> {
+  columns: Column<T>[]
+  data: T[]
+  keyExtractor: (row: T) => string
+}
+export default function Table<T>({ columns, data, keyExtractor }: TableProps<T>) {
+  return (
+    <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+      <table className="w-full min-w-[640px] border-collapse">
         <thead>
           <tr>
             {columns.map((column) => (
@@ -37,5 +38,6 @@ interface Column<T> {
           ))}
         </tbody>
       </table>
-    )
-  }
+    </div>
+  )
+}
