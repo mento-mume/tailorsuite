@@ -29,9 +29,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(currentUser);
 
       if (currentUser) {
-        const snapshot = await getDoc(doc(db, "Users", currentUser.uid));
-        if (snapshot.exists()) {
-          setProfile(snapshot.data() as UserProfile);
+        try {
+          const snapshot = await getDoc(doc(db, "Users", currentUser.uid));
+          setProfile(snapshot.exists() ? (snapshot.data() as UserProfile) : null);
+        } catch {
+          setProfile(null);
         }
       } else {
         setProfile(null);

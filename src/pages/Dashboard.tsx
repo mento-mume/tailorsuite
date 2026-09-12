@@ -6,7 +6,6 @@ import { type Order } from "../data/orderTypes";
 import { useNavigate, Link } from "react-router-dom";
 import { type Payment } from "../data/paymentTypes";
 import { getOrderBalance } from "../utils/paymentCalculation";
-
 import {
   ClipboardList,
   CheckCircle2,
@@ -14,6 +13,22 @@ import {
   AlertCircle,
   Plus,
 } from "lucide-react";
+
+// order.dueDate is a plain "YYYY-MM-DD" string. `new Date(order.dueDate)`
+// parses that as UTC midnight, which drifts to the wrong local calendar day
+// in any timezone ahead of UTC — parse the components directly instead.
+function parseLocalDate(dateString: string): Date {
+  const [year, month, day] = dateString.split("-").map(Number);
+  return new Date(year, (month || 1) - 1, day || 1);
+}
+
+function isSameLocalDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
 
 interface DashboardProps {
   orders: Order[];
@@ -26,7 +41,12 @@ export default function Dashboard({
   isLoading,
 }: DashboardProps) {
   const navigate = useNavigate();
-  const todaysOrders = orders.slice(0, 4);
+  const now = new Date();
+
+  const todaysOrders = orders.filter((order) => {
+    const due = parseLocalDate(order.dueDate);
+    return !isNaN(due.getTime()) && isSameLocalDay(due, now);
+  });
 
   const upcomingDeliveries = orders
     .filter(
@@ -50,12 +70,10 @@ export default function Dashboard({
     .sort((a, b) => b.createdAt - a.createdAt)
     .slice(0, 4);
 
-  const now = new Date();
-
   const overdueCount = orders.filter((order) => {
     if (order.status === "Delivered" || order.status === "Cancelled")
       return false;
-    const due = new Date(order.dueDate);
+    const due = parseLocalDate(order.dueDate);
     return !isNaN(due.getTime()) && due < now;
   }).length;
 

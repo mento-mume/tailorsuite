@@ -15,8 +15,11 @@ service cloud.firestore {
       allow read: if isSignedIn();
 
       // Self-provisioning during invite acceptance: only allowed if it matches
-      // a real, still-pending invite for this exact email + role.
+      // a real, still-pending invite for this exact email + role, AND the
+      // caller actually authenticated as that email (not just anyone who
+      // knows/guesses the invite token).
       allow create: if isSignedIn() && request.auth.uid == userId &&
+        request.auth.token.email == request.resource.data.email &&
         get(/databases/$(database)/documents/invites/$(request.resource.data.inviteToken)).data.status == 'pending' &&
         get(/databases/$(database)/documents/invites/$(request.resource.data.inviteToken)).data.email == request.resource.data.email &&
         get(/databases/$(database)/documents/invites/$(request.resource.data.inviteToken)).data.role == request.resource.data.role;

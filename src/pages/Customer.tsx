@@ -3,10 +3,9 @@ import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import Modal from "../components/ui/Modal";
 import { Eye, Pencil, Trash2, Plus } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { type Order } from "../data/orderTypes";
 import { type Customer } from "../data/customerTypes";
-import { getOrderBalance } from "../utils/paymentCalculation";
 import { type Payment } from "../data/paymentTypes";
 
 const avatarColors = [
@@ -165,16 +164,37 @@ export default function Customers({
     }
   }
 
-  // Helper function to get customer order stats
+  // Precomputed once per orders/payments change instead of re-filtering both
+  // full arrays for every customer on every render (was O(customers × orders
+  // × payments) via getCustomerStats -> getOrderBalance -> getAmountPaid).
+  const customerStatsById = useMemo(() => {
+    const paidByOrderId = new Map<string, number>();
+    for (const payment of payments) {
+      paidByOrderId.set(
+        payment.orderId,
+        (paidByOrderId.get(payment.orderId) ?? 0) + payment.amount,
+      );
+    }
+
+    const stats = new Map<string, { ordersCount: number; amountOwed: number }>();
+    for (const order of orders) {
+      const balance = order.amount - (paidByOrderId.get(order.id) ?? 0);
+      const existing = stats.get(order.customerId) ?? {
+        ordersCount: 0,
+        amountOwed: 0,
+      };
+      stats.set(order.customerId, {
+        ordersCount: existing.ordersCount + 1,
+        amountOwed: existing.amountOwed + (balance > 0 ? balance : 0),
+      });
+    }
+    return stats;
+  }, [orders, payments]);
+
   function getCustomerStats(customerId: string) {
-    const customerOrders = orders.filter(
-      (order) => order.customerId === customerId,
+    return (
+      customerStatsById.get(customerId) ?? { ordersCount: 0, amountOwed: 0 }
     );
-    const ordersCount = customerOrders.length;
-    const amountOwed = customerOrders
-      .filter((o) => getOrderBalance(o, payments) > 0)
-      .reduce((sum, o) => sum + getOrderBalance(o, payments), 0);
-    return { ordersCount, amountOwed };
   }
 
   return (

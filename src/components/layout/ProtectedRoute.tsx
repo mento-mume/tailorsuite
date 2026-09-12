@@ -14,14 +14,17 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (profile?.status === "disabled") {
+  // No profile doc (deleted, never provisioned, etc.) is treated the same as
+  // a disabled account: there's no role to check against, so deny by default
+  // instead of falling through to the role check below.
+  if (!profile || profile.status === "disabled") {
     signOut(auth);
     return <Navigate to="/login" replace />;
   }
 
   const allowedRoles = pageAccess[location.pathname];
 
-  if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
+  if (allowedRoles && !allowedRoles.includes(profile.role)) {
     return <Navigate to="/" replace />;
   }
 
