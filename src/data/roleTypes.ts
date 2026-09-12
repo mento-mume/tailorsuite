@@ -14,3 +14,11 @@ export const pageAccess: Record<string, Role[]> = {
   "/expenses": ["owner", "accountant"],
   "/reports": ["owner", "accountant"],
 };
+
+export interface UserProfile {
+  uid: string;
+  email: string;
+  role: Role;
+  username?: string;
+  phone?: string;
+}

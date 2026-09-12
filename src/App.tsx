@@ -23,7 +23,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext.tsx";
 import ProtectedRoute from "./components/layout/ProtectedRoute.tsx";
 import { type Payment } from "./data/paymentTypes";
-
+import type { UserProfile } from "./data/roleTypes.ts";
 function App() {
   const { user, profile, isLoading } = useAuth();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -131,15 +131,22 @@ function App() {
   async function deletePayment(paymentId: string) {
     await deleteDoc(doc(db, "payments", paymentId));
   }
+
+  async function updateOwnProfile(
+    updates: Partial<Pick<UserProfile, "username" | "phone">>,
+  ) {
+    if (!user) return;
+    await updateDoc(doc(db, "Users", user.uid), updates);
+  }
   return (
     <div className="flex">
       <Sidebar isCollapsed={isSidebarCollapsed} />
       <div className="flex-1 flex flex-col">
         <TopNav
-          userName="Amaka Okoro"
+          profile={profile}
+          onUpdateProfile={updateOwnProfile}
           onToggleSidebar={() => setIsSidebarCollapsed((prev) => !prev)}
         />
-
         <main className="flex-1 p-8">
           <Routes>
             <Route
