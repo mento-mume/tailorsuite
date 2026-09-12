@@ -248,55 +248,131 @@ export default function Orders({
             Loading orders…
           </div>
         ) : (
-          <Table<Order>
-            data={filteredOrders}
-            keyExtractor={(order) => order.id}
-            columns={[
-              { header: "Order", render: (order) => order.id },
-              { header: "Customer", render: (order) => order.customer },
-              { header: "Item", render: (order) => order.item },
-              {
-                header: "Status",
-                render: (order) => <Badge status={order.status} />,
-              },
-              { header: "Due date", render: (order) => order.dueDate },
-              {
-                header: "Amount",
-                render: (order) => `₦${order.amount.toLocaleString()}`,
-              },
-              {
-                header: "",
-                render: (order) => (
-                  <div className="flex items-center gap-1">
+          <>
+            {/* Mobile / tablet: card list */}
+            <div className="flex flex-col gap-3 md:hidden">
+              {filteredOrders.map((order) => (
+                <div
+                  key={order.id}
+                  className="rounded-xl border border-[#E5E7EB] p-4 flex flex-col gap-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold">{order.customer}</p>
+                      <p className="text-xs text-text-secondary">{order.id}</p>
+                    </div>
+                    <Badge status={order.status} />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-y-2 text-sm">
+                    <div>
+                      <span className="text-xs text-text-secondary block">
+                        Item
+                      </span>
+                      {order.item}
+                    </div>
+                    <div>
+                      <span className="text-xs text-text-secondary block">
+                        Due date
+                      </span>
+                      {order.dueDate}
+                    </div>
+                    <div>
+                      <span className="text-xs text-text-secondary block">
+                        Amount
+                      </span>
+                      ₦{order.amount.toLocaleString()}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1 pt-1 border-t border-[#F3F4F6]">
                     <button
                       onClick={() => openViewModal(order)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:bg-gray-100"
+                      className="w-9 h-9 rounded-lg flex items-center justify-center text-text-secondary hover:bg-gray-100"
                     >
                       <Eye size={16} />
                     </button>
                     <button
                       onClick={() => openEditModal(order)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:bg-gray-100"
+                      className="w-9 h-9 rounded-lg flex items-center justify-center text-text-secondary hover:bg-gray-100"
                     >
                       <Pencil size={16} />
                     </button>
                     <button
-                      onClick={() => openDeleteConfirm(order)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-danger hover:bg-red-50"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                    <button
                       onClick={() => setRecordingPaymentFor(order)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-success hover:bg-green-50"
+                      className="w-9 h-9 rounded-lg flex items-center justify-center text-success hover:bg-green-50"
                     >
                       <Banknote size={16} />
                     </button>
+                    <button
+                      onClick={() => openDeleteConfirm(order)}
+                      className="w-9 h-9 rounded-lg flex items-center justify-center text-danger hover:bg-red-50 ml-auto"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
-                ),
-              },
-            ]}
-          />
+                </div>
+              ))}
+
+              {filteredOrders.length === 0 && (
+                <div className="py-12 text-center text-sm text-text-secondary">
+                  No orders found.
+                </div>
+              )}
+            </div>
+            {/* Desktop: table */}
+            <div className="hidden md:block">
+              <Table<Order>
+                data={filteredOrders}
+                keyExtractor={(order) => order.id}
+                columns={[
+                  { header: "Order", render: (order) => order.id },
+                  { header: "Customer", render: (order) => order.customer },
+                  { header: "Item", render: (order) => order.item },
+                  {
+                    header: "Status",
+                    render: (order) => <Badge status={order.status} />,
+                  },
+                  { header: "Due date", render: (order) => order.dueDate },
+                  {
+                    header: "Amount",
+                    render: (order) => `₦${order.amount.toLocaleString()}`,
+                  },
+                  {
+                    header: "",
+                    render: (order) => (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => openViewModal(order)}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:bg-gray-100"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button
+                          onClick={() => openEditModal(order)}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:bg-gray-100"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          onClick={() => openDeleteConfirm(order)}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-danger hover:bg-red-50"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => setRecordingPaymentFor(order)}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-success hover:bg-green-50"
+                        >
+                          <Banknote size={16} />
+                        </button>
+                      </div>
+                    ),
+                  },
+                ]}
+              />
+            </div>
+          </>
         )}
       </Card>
 

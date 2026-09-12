@@ -5,6 +5,7 @@ import {
   ShoppingBag,
   CreditCard,
   LineChart,
+  UserPlus,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -34,6 +35,10 @@ const navSections: NavSection[] = [
       { label: "Expenses", path: "/expenses", icon: <CreditCard /> },
       { label: "Reports", path: "/reports", icon: <LineChart /> },
     ],
+  },
+  {
+    label: "Administration",
+    items: [{ label: "Staff", path: "/staff", icon: <UserPlus /> }],
   },
 ];
 

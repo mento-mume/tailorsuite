@@ -6,6 +6,8 @@ import { Eye, Pencil, Trash2, Plus } from "lucide-react";
 import { useState } from "react";
 import { type Order } from "../data/orderTypes";
 import { type Customer } from "../data/customerTypes";
+import { getOrderBalance } from "../utils/paymentCalculation";
+import { type Payment } from "../data/paymentTypes";
 
 const avatarColors = [
   "bg-primary",
@@ -19,6 +21,7 @@ const avatarColors = [
 interface CustomersProps {
   customers: Customer[];
   orders: Order[];
+  payments: Payment[];
   isLoading: boolean;
   onAddCustomer: (
     customer: Omit<
@@ -36,6 +39,7 @@ interface CustomersProps {
 export default function Customers({
   customers,
   orders,
+  payments,
   isLoading,
   onAddCustomer,
   onUpdateCustomer,
@@ -133,8 +137,8 @@ export default function Customers({
     );
     const ordersCount = customerOrders.length;
     const amountOwed = customerOrders
-      .filter((o) => !o.isPaid)
-      .reduce((sum, o) => sum + o.amount, 0);
+      .filter((o) => getOrderBalance(o, payments) > 0)
+      .reduce((sum, o) => sum + getOrderBalance(o, payments), 0);
     return { ordersCount, amountOwed };
   }
 

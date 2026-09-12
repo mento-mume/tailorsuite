@@ -5,6 +5,9 @@ export interface UserProfile {
   uid: string;
   email: string;
   role: Role;
+  status: "active" | "disabled";
+  username?: string;
+  phone?: string;
 }
 
 export const pageAccess: Record<string, Role[]> = {
@@ -13,12 +16,5 @@ export const pageAccess: Record<string, Role[]> = {
   "/customers": ["owner", "receptionist"],
   "/expenses": ["owner", "accountant"],
   "/reports": ["owner", "accountant"],
+  "/staff": ["owner"],
 };
-
-export interface UserProfile {
-  uid: string;
-  email: string;
-  role: Role;
-  username?: string;
-  phone?: string;
-}

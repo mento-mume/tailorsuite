@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getRole() {
+      return get(/databases/$(database)/documents/Users/$(request.auth.uid)).data.role;
+    }
+
+    // Capital "Users" — matches your code
+    match /Users/{userId} {
+      allow read: if isSignedIn();
+
+      // Self-provisioning during invite acceptance: only allowed if it matches
+      // a real, still-pending invite for this exact email + role.
+      allow create: if isSignedIn() && request.auth.uid == userId &&
+        get(/databases/$(database)/documents/invites/$(request.resource.data.inviteToken)).data.status == 'pending' &&
+        get(/databases/$(database)/documents/invites/$(request.resource.data.inviteToken)).data.email == request.resource.data.email &&
+        get(/databases/$(database)/documents/invites/$(request.resource.data.inviteToken)).data.role == request.resource.data.role;
+
+      allow update: if isSignedIn() && (
+        (request.auth.uid == userId &&
+          request.resource.data.role == resource.data.role &&
+          request.resource.data.status == resource.data.status) ||
+        getRole() == 'owner'
+      );
+
+      allow delete: if isSignedIn() && getRole() == 'owner';
+    }
+
+    match /invites/{token} {
+      // Token is the secret: anyone holding the link can read that one invite,
+      // but the collection can't be listed without being an owner.
+      allow get: if true;
+      allow list: if isSignedIn() && getRole() == 'owner';
+      allow create, delete: if isSignedIn() && getRole() == 'owner';
+
+      // Owner can edit freely (e.g. revoke); the invited user (now signed in
+      // with that email) may flip their own invite from pending -> accepted.
+      allow update: if isSignedIn() && (
+        getRole() == 'owner' ||
+        (resource.data.status == 'pending' &&
+          request.resource.data.status == 'accepted' &&
+          request.auth.token.email == resource.data.email)
+      );
+    }
+
+    match /orders/{orderId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && getRole() in ['owner', 'receptionist'];
+    }
+
+    match /customers/{customerId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && getRole() in ['owner', 'receptionist'];
+    }
+
+    match /expenses/{expenseId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && getRole() in ['owner', 'accountant'];
+    }
+
+    match /payments/{paymentId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && getRole() in ['owner', 'receptionist', 'accountant'];
+    }
+  }
+}

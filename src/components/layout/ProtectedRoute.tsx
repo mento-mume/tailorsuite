@@ -1,12 +1,23 @@
 // src/components/ProtectedRoute.tsx
+import { signOut } from "firebase/auth";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { auth } from "../../lib/firebase";
 import { pageAccess } from "../../data/roleTypes";
 import type { ReactNode } from "react";
 
 export default function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const location = useLocation();
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (profile?.status === "disabled") {
+    signOut(auth);
+    return <Navigate to="/login" replace />;
+  }
 
   const allowedRoles = pageAccess[location.pathname];
 
